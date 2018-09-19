@@ -111,7 +111,7 @@ class XhtmlDoc(object):
 
 class _XML(list):
     """提供xml序列输出
-    元素属性名使用_0xnn来表示一些特殊的字符"-",":"等,其中nn为该字符的hex值
+    元素属性名使用_xnn来表示一些特殊的字符"-",":"等,其中nn为该字符的hex值
     它们在访问时使用这些规则,在输出为xml时则被转义:
     >>> _XML('item', opf_x3ascheme='UUID').xml
     '<item opf:scheme="UUID" />'
