@@ -541,7 +541,7 @@ class NavPoint(_XML):
                         break
         return nodes[-1]
 
-    def _getpath(self, lastid: str = '') -> list:
+    def getpath(self, lastid: str = '') -> list:
         """得到指定id的路径
         hrefid: 路径计算出相应的id(hrefid函数)
         >>> ncx = NavPoint('第一章 突如其来的就这行发生了','p1')
@@ -639,12 +639,15 @@ class NavMap(NavPoint):
         >>> nav.append(NavPoint('第一节 狂燥的布莱尔','p3'),'p1','p2')
         >>> nav.getpath('p4')
         ['p1', 'p4']
+        >>> nav.getpath('')
+        Traceback (most recent call last):
+        errors.QuotedNothing
         """
         path = super().getpath(hrefid(src))
         if path:
-            return path[1:]
+            return path[1:]  # path[0]指向了navmap自己
         else:
-            return path
+            raise QuotedNothing(src)
 
     @property
     def depth(self):

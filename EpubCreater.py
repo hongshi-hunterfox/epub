@@ -155,7 +155,7 @@ class EpubCreater(object):
                     self.mainfest.append(m_item)
                     self.spine.append(doc.name)
                     try:
-                        path = tuple(self.nav.getpath(doc.name))
+                        path = tuple(self.nav.getpath(doc.parentsrc))
                     except (Exception,):
                         path = ()
                     self.nav.append(NavPoint(doc.title, doc.name), *path)
