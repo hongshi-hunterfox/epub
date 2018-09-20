@@ -47,7 +47,7 @@ _F_TOC_NCX = '''\
 </ncx>'''
 
 
-def guid(s: str = '') -> str:
+def guid(s='') -> str:
     """
     >>> guid('a')
     'a20740b4-71b5-3b90-852e-bdb859da9fdd'
@@ -55,8 +55,10 @@ def guid(s: str = '') -> str:
     '596b79dc-00dd-3991-a72f-d3696c38c64f'
     >>> guid()
     '596b79dc-00dd-3991-a72f-d3696c38c64f'
+    >>> guid(3) == guid('3')
+    True
     """
-    return str(uuid.uuid3(uuid.NAMESPACE_OID, s))
+    return str(uuid.uuid3(uuid.NAMESPACE_OID, str(s)))
 
 
 class EpubCreater(object):
@@ -148,17 +150,39 @@ class EpubCreater(object):
                     # doc有name,title,html三项属性
                     if doc.name is None:
                         doc.name = '{}.xhtml'.format(len(self.metadata))
-                    src = 'Text/' + doc.name
-                    wt('OEBPS/' + src, doc.html)
-                    m_item = ManifestItem(src, CoreMediaType.xhtml)
+                    wt('OEBPS/' + doc.name, doc.html)
+                    m_item = ManifestItem(doc.name, CoreMediaType.xhtml)
                     self.mainfest.append(m_item)
-                    self.spine.append(src)
-                    path = ()
-                    # TODO:如果有指定额外的parentsrc属性,以此重建层次路径
-                    # path = (level1_src,level2_src...)
-                    self.nav.append(NavPoint(doc.title, src), *path)
+                    self.spine.append(doc.name)
+                    try:
+                        path = tuple(self.nav.getpath(doc.name))
+                    except (Exception,):
+                        path = ()
+                    self.nav.append(NavPoint(doc.title, doc.name), *path)
             wt('OEBPS/content.opf', self.__getcontentstr())
             wt('OEBPS/toc.ncx', self.__gettocstr())
+
+
+def getgenerator(_generator: str, **args):
+    """使用指定的参数建立相应的迭代器实例
+    _generator是迭代器的名字
+        格式:[package_name.][module_name]generator_name:
+            Graps.LocalFile.GrapForPath
+        这里BookGraps是一个外部包的名字,BookGraps则是一个迭代器,它可以是任何
+        一种可以被for ... in ....调用的对象,只要迭代得到的是一个OPF.XhtmlDoc对象
+    args:如果初始化迭代器需要参数,在这里给出它们
+    """
+    if '.' in _generator:
+        # 未导入的
+        module_name = _generator[0:_generator.rindex('.')]
+        generator_name = _generator[_generator.rindex('.') + 1:]
+        import importlib
+        package = importlib.import_module(module_name)
+        generator = getattr(package, generator_name)
+    else:
+        # 已经导入的
+        generator = eval(_generator)
+    return generator(**args)
 
 
 def createepub(filename, source, showlog=True, meta=None):

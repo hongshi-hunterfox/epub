@@ -97,12 +97,14 @@ class CoreMediaType(Enum):
 class XhtmlDoc(object):
     """一个xhtml文档
     给出title与<body>中的内容即可通过html属性得到相应的xhtml文档内容"""
-    name = title = data = ''
+    name = title = data = parentsrc = ''
 
-    def __init__(self, filename: str = None, title: str = '', data: str = ''):
+    def __init__(self, filename: str = None, title: str = '',
+                 data: str = '', parentsrc: str = ''):
         self.name = filename
         self.title = title
         self.data = data
+        self.parentsrc = parentsrc
 
     @property
     def html(self):
@@ -539,6 +541,22 @@ class NavPoint(_XML):
                         break
         return nodes[-1]
 
+    def _getpath(self, lastid: str = '') -> list:
+        """得到指定id的路径
+        hrefid: 路径计算出相应的id(hrefid函数)
+        >>> ncx = NavPoint('第一章 突如其来的就这行发生了','p1')
+        >>> ncx.append(NavPoint('第一节 谁都不要拦着我','p2'))
+        >>> ncx.getpath('p2')
+        ['p1', 'p2']
+        """
+        if self.id == lastid:
+            return [lastid]
+        for item in self:
+            if isinstance(item, NavPoint):
+                path = item.getpath(lastid)
+                if path:
+                    return [self.id] + path
+
     @property
     def depth(self):
         """这个多层结构的最大深度"""
@@ -610,6 +628,23 @@ class NavMap(NavPoint):
         self.name = 'navMap'
         self.args = {}
         self.clear()
+
+    def getpath(self, src: str = '') -> list:
+        """
+        >>> nav = NavMap()
+        >>> nav.append(NavPoint('第一部 突如其来','p1'))
+        >>> nav.append(NavPoint('第二部 今天没吃药','p5'))
+        >>> nav.append(NavPoint('第一章 谁都不要拦着我','p2'),'p1')
+        >>> nav.append(NavPoint('第二章 万万没有想到','p4'),'p1')
+        >>> nav.append(NavPoint('第一节 狂燥的布莱尔','p3'),'p1','p2')
+        >>> nav.getpath('p4')
+        ['p1', 'p4']
+        """
+        path = super().getpath(hrefid(src))
+        if path:
+            return path[1:]
+        else:
+            return path
 
     @property
     def depth(self):
