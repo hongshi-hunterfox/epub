@@ -536,7 +536,7 @@ class NavPoint(_XML):
         for src in path:
             for e in nodes[-1]:
                 if isinstance(e, NavPoint):
-                    if e._src == src:
+                    if e.id == src:
                         nodes.append(e)
                         break
         return nodes[-1]
