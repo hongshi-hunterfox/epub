@@ -74,8 +74,8 @@ class EpubCreater(object):
     nav = NavMap()
 
     def __init__(self, **args):
-        """可以通过参数来设置必要的信息以及触发文件生成动作
-        这就可以简化整个生成epub文件的过程为一条语句
+        """可以通过参数来设置必要的信息以及触发文件生成动作以简化初始化工作
+        可用的参数:file(self.__file),showlog
         """
         for k, v in args.items():
             if hasattr(self, k):
@@ -147,9 +147,7 @@ class EpubCreater(object):
             wt('META-INF/container.xml', _F_CONTAINER_XML)
             for source in self.source:
                 for doc in source:
-                    # doc有name,title,html三项属性
-                    if doc.name is None:
-                        doc.name = '{}.xhtml'.format(len(self.metadata))
+                    # doc有属性:name,title,html,parentsrc
                     wt('OEBPS/' + doc.name, doc.html)
                     m_item = ManifestItem(doc.name, CoreMediaType.xhtml)
                     self.mainfest.append(m_item)
