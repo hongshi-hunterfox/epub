@@ -6,7 +6,7 @@
 from EpubCreater import createepub, getgenerator
 
 
-bookname = '风暴法神'
+bookname = '克拉克科幻作品集'
 if bookname == '北宋大表哥':
     # iter_page:通过目录页得到列表
     args = {'_generator': 'Iterators.iter_page',
@@ -45,9 +45,15 @@ elif bookname == '风暴法神':
     # iter_txt:从单一txt载入全部章节
     args = {'_generator': 'Iterators.iter_txt',
             'file': 'C:/Users/hunte/Documents/baiduyun/风暴法神.TXT'}
+elif bookname == '克拉克科幻作品集':
+    # iter_dir:从一个目录中的所有文件载入全部章节
+    args = {'_generator': 'Iterators.iter_dir',
+            'homedir': 'C:/Users/hunte/Documents/baiduyun/阿瑟·C·克拉克',
+            'exts': 'txt',
+            'includesubdir': True}
 else:
     args = None
 
 if args:
     destfile = 'C:/Users/hunte/Documents/epub/{}.txt'.format(bookname)
-    createepub(destfile, getgenerator(**args), meta=args)
+    createepub(destfile, getgenerator(**args), meta=args, showlog=False)
