@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""EpubCreater.source常用的迭代器"""
+"""EpubCreater.source常用的迭代器及辅助功能"""
 
 from urllib.request import urlopen
 import re
