@@ -330,7 +330,7 @@ def iter_dir(homedir, exts='*', includesubdir=False, monoinfile=False,
         if len(new_dirs) > 0:  # 存在未注册的上级目录
             new_dirs.reverse()
             for each_dir in new_dirs:
-                dirnames[each_dir] = next(dirsrc)[5:]
+                dirnames[each_dir] = next(dirsrc)
                 yield dirtodoc(each_dir, dirnames)
         # 文件编码,必要时通过内容识别
         file_encode = encode
@@ -342,7 +342,7 @@ def iter_dir(homedir, exts='*', includesubdir=False, monoinfile=False,
                                 encode=file_encode,
                                 textengine=textengine)
             txt_doc.name = next(docsrc)
-            txt_doc.parentsrc = dirnames[dirname]
+            txt_doc.parentsrc = dirnames[dirname][5:]
             yield txt_doc
         else:
             # 文件内分章节
@@ -351,7 +351,7 @@ def iter_dir(homedir, exts='*', includesubdir=False, monoinfile=False,
             filedoc = XhtmlDoc(filename=file_src,
                                title=juststem(file),
                                data='<ui>\r\n',
-                               parentsrc=dirnames[dirname],
+                               parentsrc=dirnames[dirname][5:],
                                complete=False)
             yield filedoc
             for each_doc in iter_txt(file=file,

@@ -3,10 +3,11 @@
 主要演示了各种生成器的使用
 """
 
-from EpubCreater import createepub, getgenerator
+from EpubCreater import createepub, getgenerator, recreate
 
 
 bookname = '克拉克科幻作品集'
+bookname = 'C:/Users/hunte/Documents/epub/克拉克科幻作品集.epub'
 if bookname == '北宋大表哥':
     # iter_page:通过目录页得到列表
     args = {'_generator': 'Iterators.iter_page',
@@ -52,8 +53,13 @@ elif bookname == '克拉克科幻作品集':
             'exts': 'txt',
             'includesubdir': True}
 else:
+    # 可以给bookname一个epub文件名:
+    #   如果它是EpubCreater.createepub生成的,将会重新生成它
+    #   这在文章源的内容发生变化时很有用
     args = None
 
 if args:
     destfile = 'C:/Users/hunte/Documents/epub/{}.txt'.format(bookname)
     createepub(destfile, getgenerator(**args), meta=args, showlog=False)
+elif bookname[-5:] == '.epub':
+    recreate(bookname)

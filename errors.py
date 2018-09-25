@@ -40,6 +40,5 @@ class QuotedRepeat(QuoteError):
     """重复引用同一个源"""
 
 
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
+class NotFoundSource(Exception):
+    """在EPUB的content.opf中找不到源的定义(meta name="source:...")"""

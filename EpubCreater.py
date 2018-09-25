@@ -8,6 +8,7 @@ import datetime
 from OPF import Metadata, Mainfest, Spine, NavMap, ManifestItem, NavPoint
 from OPF import CoreMediaType
 from OPF import lineidentity as indent
+from EpubReader import getsource
 
 _F_MIMETYPE = 'application/epub+zip'
 _F_CONTAINER_XML = '''\
@@ -141,7 +142,7 @@ class EpubCreater(object):
         提交doc时就写入,需要建立一个列表记录这些未决doc,在适当的时候进行写入。
         简单的做法是在迭代完毕后去写入
         """
-        print(self.__file)
+        print('Create epub file:', self.__file)
         with zipfile.ZipFile(self.__file, 'w') as z:
             def wt(name, data):
                 if self.showlog:
@@ -216,6 +217,16 @@ def createepub(filename, source, showlog=True, meta=None):
         if meta:
             f.addmetagroup('source', meta)
         f.source.append(source)
+
+
+def recreate(epub_file: str):
+    """重新生成一个epub文件"""
+    args = getsource(epub_file)
+    if args:
+        createepub(filename=epub_file,
+                   source=getgenerator(**args),
+                   showlog=True,
+                   meta=args)
 
 
 if __name__ == '__main__':
