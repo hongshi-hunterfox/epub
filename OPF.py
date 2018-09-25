@@ -96,15 +96,25 @@ class CoreMediaType(Enum):
 
 class XhtmlDoc(object):
     """一个xhtml文档
-    给出title与<body>中的内容即可通过html属性得到相应的xhtml文档内容"""
+    给出title与<body>中的内容即可通过html属性得到相应的xhtml文档内容
+    属性:
+    name是它写入到epub(zip)时的文件名,相对于OEBPS目录
+    title是文档标题,它用于构建相应的xhtml
+    data是文档的内容,它用于构建相应的xhtml
+    parentsrc是文档在导航(nav)中上层的文档名,如果它是顶层的,则为''
+    complete:文档是完成态.如果文档未完成则置它为False
+    """
     name = title = data = parentsrc = ''
+    complete = True
 
     def __init__(self, filename: str = None, title: str = '',
-                 data: str = '', parentsrc: str = ''):
+                 data: str = '', parentsrc: str = '',
+                 complete=True):
         self.name = filename
         self.title = title
         self.data = data
         self.parentsrc = parentsrc
+        self.complete = complete
 
     @property
     def html(self):

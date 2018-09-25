@@ -136,19 +136,25 @@ class EpubCreater(object):
                                  str(data[key]))
 
     def write(self):
-        """写入epub文件"""
+        """写入epub文件
+        如果有一些文件是未决的(它们先提交了doc,然后才完成内容的构建),它们不能在
+        提交doc时就写入,需要建立一个列表记录这些未决doc,在适当的时候进行写入。
+        简单的做法是在迭代完毕后去写入
+        """
         print(self.__file)
         with zipfile.ZipFile(self.__file, 'w') as z:
             def wt(name, data):
                 if self.showlog:
                     print('file "{}" to zip...'.format(name))
                 z.writestr(name, data, zipfile.ZIP_DEFLATED)
-            wt('mimetype', _F_MIMETYPE)
-            wt('META-INF/container.xml', _F_CONTAINER_XML)
+            uncompleted = []
             for source in self.source:
                 for doc in source:
                     # doc有属性:name,title,html,parentsrc
-                    wt('OEBPS/' + doc.name, doc.html)
+                    if doc.complete:
+                        wt('OEBPS/' + doc.name, doc.html)
+                    else:
+                        uncompleted.append(doc)
                     m_item = ManifestItem(doc.name, CoreMediaType.xhtml)
                     self.mainfest.append(m_item)
                     self.spine.append(doc.name)
@@ -157,6 +163,13 @@ class EpubCreater(object):
                     except (Exception,):
                         path = ()
                     self.nav.append(NavPoint(doc.title, doc.name), *path)
+            for doc in uncompleted:
+                if not doc.complete:
+                    # 这是一个未完成的文档
+                    print('document"{}" is not completed.'.format(doc.name))
+                wt('OEBPS/' + doc.name, doc.html)
+            wt('mimetype', _F_MIMETYPE)
+            wt('META-INF/container.xml', _F_CONTAINER_XML)
             wt('OEBPS/content.opf', self.__getcontentstr())
             wt('OEBPS/toc.ncx', self.__gettocstr())
 
