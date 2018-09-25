@@ -132,6 +132,11 @@ def eachfiles(home, exts='*', includesubdir=True):
                 yield file
 
 
+def juststem(f):
+    """获取文件的根名"""
+    return os.path.splitext(os.path.basename(f))[0]
+
+
 def getfileencode(file):
     """测试得到文本类型文件可能使用的编码格式
     它不一定就是正确的
@@ -162,7 +167,8 @@ def iter_url(url_fmt, *url_params,
              linere='&nbsp;&nbsp;&nbsp;&nbsp;(.+?)<',
              textengine=default_textengine,
              encode='utf-8',
-             maxget=-1):
+             maxget=-1,
+             namegen=autoname()):
     """从指定网络页面开始循环抓取内容生成xhtml
     url_fmt/url_params: 使用它来生成每个页面的url
         在url_fmt中每个{}将被url_params中的内容替换
@@ -187,7 +193,6 @@ def iter_url(url_fmt, *url_params,
     第三章 泔水与饥饿(3931)
     """
     params = list(url_params)
-    docname = autoname()
     param_re = re.compile(paramre)
     title_re = re.compile(titlere)
     line_re = re.compile(linere)
@@ -196,7 +201,7 @@ def iter_url(url_fmt, *url_params,
             url = url_fmt.format(*params)
             html = urlopen(url).read().decode(encode)
             yield htmltodoc(html,
-                            filename=next(docname),
+                            filename=next(namegen),
                             titlere=title_re,
                             linere=line_re,
                             textengine=textengine)
@@ -212,7 +217,8 @@ def iter_page(url, hrefre,
               linere='&nbsp;&nbsp;&nbsp;&nbsp;(.+?)<',
               textengine=default_textengine,
               encode='utf-8',
-              maxget=-1):
+              maxget=-1,
+              namegen=autoname()):
     """从指定url中的子页面的列表来枚举每个子页面
     >>> it = iter_page('https://www.xxbiquge.com/26_26345/',
     ...                '<a +href="/[\d_]+?/([\d_]+?\.html)" *>(第.+?)</a>',
@@ -227,11 +233,10 @@ def iter_page(url, hrefre,
     title_re = re.compile(titlere)
     line_re = re.compile(linere)
     html = urlopen(url).read().decode(encode)
-    it_name = autoname()
     for href in re.compile(hrefre).findall(html):
         html = urlopen(url + href[0]).read().decode(encode)
         yield htmltodoc(html,
-                        filename=next(it_name),
+                        filename=next(namegen),
                         titlere=title_re,
                         linere=line_re,
                         textengine=textengine)
@@ -245,7 +250,8 @@ def iter_txt(file,
              ignorebkline=True,
              textengine=default_textengine,
              encode='utf-8',
-             startline=1):
+             startline=1,
+             namegen=autoname()):
     """从一个文本文件中枚举所有章节
     titlere: 用于识别章节名的正则表达式,匹配的行作为章节名,后续的行作为章节内容
     ignorebkline: 是否跳过空行,默认是不处理空行的
@@ -265,9 +271,8 @@ def iter_txt(file,
     >>> type(it)
     <class 'generator'>
     """
-    docname = autoname()
     title_re = re.compile(titlere)
-    new_doc = XhtmlDoc(next(docname))
+    new_doc = XhtmlDoc(next(namegen))
     with open(file, 'r', encoding=encode) as f:
         for line in f:
             line = line.replace('\n', '')
@@ -279,7 +284,7 @@ def iter_txt(file,
                 # 一个新的标题行
                 if new_doc.title != '':
                     yield new_doc  # 迭代出上一个文档
-                    new_doc = XhtmlDoc(next(docname))
+                    new_doc = XhtmlDoc(next(namegen))
                 new_doc.title = line
             else:
                 new_doc.data += textengine(line) + '\r\n'
@@ -311,7 +316,7 @@ def iter_dir(homedir, exts='*', includesubdir=False, monoinfile=False,
     dirnames = {homedir: ''}
     docsrc = autoname('Text/{}.xhtml')
     dirsrc = autoname('Text/dir{}.xhtml')
-
+    li_fmt = '<li><a href="{}">{}</a></li>\r\n'
     for file in eachfiles(homedir, exts, includesubdir):
         dirname = os.path.dirname(file)
         # 新目录的父节点可能也没有...直到homedir才确定有
@@ -325,37 +330,84 @@ def iter_dir(homedir, exts='*', includesubdir=False, monoinfile=False,
         if len(new_dirs) > 0:  # 存在未注册的上级目录
             new_dirs.reverse()
             for each_dir in new_dirs:
-                dirnames[each_dir] = next(dirsrc)
+                dirnames[each_dir] = next(dirsrc)[5:]
                 yield dirtodoc(each_dir, dirnames)
         # 文件编码,必要时通过内容识别
         file_encode = encode
         if file_encode is None:
             file_encode = getfileencode(file)
         if monoinfile:
-            # 文件内不分章节
-            txt_doc = filetodoc(next(docsrc),
+            # 文件内不分章节,整个文件只生成一个xhtmldoc
+            txt_doc = filetodoc(filename=file,
                                 encode=file_encode,
                                 textengine=textengine)
-            txt_doc.name = txt_doc.name[len(homedir):]
+            txt_doc.name = next(docsrc)
             txt_doc.parentsrc = dirnames[dirname]
             yield txt_doc
         else:
             # 文件内分章节
+            # 文件本身生成一个相应的的目录式文档(它是未决提交的)
             file_src = next(dirsrc)
-            file_stem = os.path.basename(file)
-            if '.' in file_stem:
-                file_stem = file_stem[0: file_stem.rindex('.')]
-            yield XhtmlDoc(filename=file_src,
-                           title=file_stem,
-                           data='',
-                           parentsrc=dirnames[dirname])
+            filedoc = XhtmlDoc(filename=file_src,
+                               title=juststem(file),
+                               data='<ui>\r\n',
+                               parentsrc=dirnames[dirname],
+                               complete=False)
+            yield filedoc
             for each_doc in iter_txt(file=file,
                                      titlere=titlere,
                                      textengine=textengine,
-                                     encode=file_encode):
-                each_doc.name = next(docsrc)
-                each_doc.parentsrc = file_src
+                                     encode=file_encode,
+                                     namegen=docsrc):
+                each_doc.parentsrc = file_src[5:]
+                filedoc.data += li_fmt.format(each_doc.name[5:],
+                                              each_doc.title)
                 yield each_doc
+            filedoc.data += '</ui>\r\n'
+            filedoc.complete = True  # filedoc已经完成
+
+
+def iter_files(files: list,
+               titlere=None,
+               textengine=default_textengine,
+               encode=None,
+               namegen=autoname()):
+    """从一组文件中迭代
+    titlere: 章节标题识别使用的正则式
+        如果不指定,则每个文件生成一个文档,它使用文件的根名作为标题
+        如果指定则以文件名下含章节来构成多层导航
+    textengine: 内容行处理器
+    encode: 文件使用的编码
+        若不指定则自动识别,但这会增加额外的处理时间并且不一定正确
+    """
+    li_fmt = '<li><a href="{}">{}</a></li>\r\n'
+    for file in files:
+        file_encode = encode
+        if file_encode is None:  # 文件编码识别
+            file_encode = getfileencode(file)
+        if titlere:  # 文件内分章节
+            file_doc = XhtmlDoc(filename=next(namegen),
+                                title=juststem(file),
+                                data='<ui>\r\n',
+                                complete=False)
+            yield file_doc  # 文档是未决的
+            for each_doc in iter_txt(file=file,
+                                     titlere=titlere,
+                                     textengine=textengine,
+                                     encode=file_encode,
+                                     namegen=namegen):
+                file_doc.data += li_fmt.format(each_doc.name,
+                                               each_doc.title)
+                each_doc.parentsrc = file_doc.name
+                yield each_doc
+            file_doc.data += '</ui>\r\n'
+            file_doc.complete = True
+        else:  # 文件内不分章节
+            txt_doc = filetodoc(filename=file,
+                                encode=file_encode,
+                                textengine=textengine)
+            txt_doc.name = next(namegen)
+            yield txt_doc
 
 
 if __name__ == '__main__':
