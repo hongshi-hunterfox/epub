@@ -7,8 +7,8 @@ displayedname(name: str) -> str
 --------------------------------
 在xml标签中,一些Tag/Property是可以包含一些特殊字符如":","-"等，这些名称映射到对
 象中时,需要进行转码,在本项目中,使用"_xhh"来表示一些不可出现在对象属性名中的字符,
-如使用"_x3a"代替":",而函数``displayedname``可以将这种被替代的部分还原为相应的特
-殊字符.
+如使用"_x3a"代替":",而函数 ``displayedname`` 可以将这种被替代的部分还原为相应的
+特殊字符.
 
 ::
 
@@ -17,8 +17,8 @@ displayedname(name: str) -> str
 
 lineidentity(s: str, step: int = 2) -> str:
 --------------------------------------------
-函数lineidentity用于次一个多行文本的每一行添加一段前置的空格以形成缩进,这在美化
-xml文档时相当有用.
+函数 ``lineidentity`` 用于次一个多行文本的每一行添加一段前置的空格以形成缩进,这
+在美化xml文档时相当有用.
 
 ::
 
@@ -35,11 +35,11 @@ class CoreMediaType
 
 class XhtmlDoc
 -----------------
-这是``application/xhtml+xml``类型文档的处理对象,它封装了xhtml文档中与内容无关的
-部分,因此,只需要填充它的``title(str)``与``data(html块)``即可通过html属性得到一个
-符合要求的xhtml文档.
+这是 ``application/xhtml+xml`` 类型文档的处理对象,它封装了xhtml文档中与内容无关
+的部分,因此,只需要填充它的 ``title(str)`` 与 ``data(html块)`` 即可通过html属性
+得到一个符合要求的xhtml文档.
 
-为了它能写入到epub中,还需要为它指定``name``,必要时还需要指定``parentsrc``.
+为了它能写入到epub中,还需要为它指定 ``name`` ,必要时还需要指定 ``parentsrc`` .
 
 为了能使文档延后完成内容的构建,可以指定``complete``为``Flase``,并在完成后内容后
 指定``complete``为``True``.
