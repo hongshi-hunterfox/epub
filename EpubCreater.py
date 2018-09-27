@@ -139,10 +139,10 @@ class EpubCreater(object):
                 if self.showlog:
                     print('file "{}" to zip...'.format(name))
                 z.writestr(name, data, zipfile.ZIP_DEFLATED)
-            uncompleted = []
             for source in self.source:
+                uncompleted = []
                 for doc in source:
-                    # doc有属性:name,title,html,parentsrc
+                    # doc有属性:name,title,html,parentsrc,complete
                     if doc.complete:
                         wt('OEBPS/' + doc.name, doc.html)
                     else:
@@ -155,11 +155,10 @@ class EpubCreater(object):
                     except (Exception,):
                         path = ()
                     self.nav.append(NavPoint(doc.title, doc.name), *path)
-            for doc in uncompleted:
-                if not doc.complete:
-                    # 这是一个未完成的文档
-                    print('document"{}" is not completed.'.format(doc.name))
-                wt('OEBPS/' + doc.name, doc.html)
+                for doc in uncompleted:
+                    if not doc.complete:
+                        pass  # 这是一个未完成的文档,还是写了吧
+                    wt('OEBPS/' + doc.name, doc.html)
             wt('mimetype', _F_MIMETYPE)
             wt('META-INF/container.xml', _F_CONTAINER_XML)
             wt('OEBPS/content.opf', self.__getcontentstr())
@@ -176,15 +175,14 @@ def getgenerator(_generator: str, **kwgs):
     args:如果初始化迭代器需要参数,在这里给出它们
     """
     if '.' in _generator:
-        # 未导入的
-        module_name = _generator[0:_generator.rindex('.')]
-        generator_name = _generator[_generator.rindex('.') + 1:]
-        import importlib
-        package = importlib.import_module(module_name)
-        generator = getattr(package, generator_name)
-    else:
-        # 已经导入的
-        generator = eval(_generator)
+        path = _generator.split('.')
+        module_name = path[0]
+        print('module_name:', module_name)
+        if module_name not in locals().keys():
+            # 这是一个未导入的模块/包
+            module = __import__(module_name)
+            _generator = '.'.join(['module'] + path[1:])
+    generator = eval(_generator)
     return generator(**kwgs)
 
 
