@@ -60,5 +60,6 @@ for rst_file in rsts:
         module_dict = get_moduledict(getstem(rst_file))
     except (Exception,):
         module_dict = {}
+    print(getstem(rst_file), '...')
     doctest.testfile(rst_file,
                      extraglobs=module_dict)
