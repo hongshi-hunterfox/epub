@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""""""
+"""生成epub文件的主要模块"""
 
 import zipfile
 import pathlib
@@ -12,53 +12,44 @@ from EpubReader import getsource
 
 _F_MIMETYPE = 'application/epub+zip'
 _F_CONTAINER_XML = '''\
-<?xml version="1.0" encoding="UTF-8"?>\r
+<?xml version="1.0" encoding="UTF-8"?>
 <container version="1.0" \
-xmlns="urn:oasis:names:tc:opendocument:xmlns:container">\r
-    <rootfiles>\r
+xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+    <rootfiles>
         <rootfile full-path="OEBPS/content.opf" \
-media-type="application/oebps-package+xml"/>\r
-   </rootfiles>\r
+media-type="application/oebps-package+xml"/>
+   </rootfiles>
 </container>'''
 _F_CONTENT_OPF = '''\
-<?xml version="1.0" encoding="utf-8" ?>\r
+<?xml version="1.0" encoding="utf-8" ?>
 <package unique-identifier="BookId" version="2.0" \
-xmlns="http://www.idpf.org/2007/opf">\r
-{metadata}\r
-{manifest}\r
-{spine}\r
-  <guide>\r
-  </guide>\r
+xmlns="http://www.idpf.org/2007/opf">
+{metadata}
+{manifest}
+{spine}
+  <guide>
+  </guide>
 </package>'''
 _F_TOC_NCX = '''\
-<?xml version="1.0" encoding="utf-8" ?>\r
-<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"\r
- "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">\r
-  <ncx version="2005-1" xmlns="http://www.daisy.org/z3986/2005/ncx/">\r
-  <head>\r
-    <meta content="{identifier}" name="dtb:uid"/>\r
-    <meta content="{depth}" name="dtb:depth"/>\r
-    <meta content="0" name="dtb:totalPageCount"/>\r
-    <meta content="0" name="dtb:maxPageNumber"/>\r
-  </head>\r
-  <docTitle>\r
-    <text>{title}</text>\r
-  </docTitle>\r
-{navmap}\r
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"
+ "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+  <ncx version="2005-1" xmlns="http://www.daisy.org/z3986/2005/ncx/">
+  <head>
+    <meta content="{identifier}" name="dtb:uid"/>
+    <meta content="{depth}" name="dtb:depth"/>
+    <meta content="0" name="dtb:totalPageCount"/>
+    <meta content="0" name="dtb:maxPageNumber"/>
+  </head>
+  <docTitle>
+    <text>{title}</text>
+  </docTitle>
+{navmap}
 </ncx>'''
 
 
 def guid(s='') -> str:
-    """
-    >>> guid('a')
-    'a20740b4-71b5-3b90-852e-bdb859da9fdd'
-    >>> guid('')
-    '596b79dc-00dd-3991-a72f-d3696c38c64f'
-    >>> guid()
-    '596b79dc-00dd-3991-a72f-d3696c38c64f'
-    >>> guid(3) == guid('3')
-    True
-    """
+    """根据字符串计算一个相应的uuid,对于非字符串,将先进行str()处理"""
     return str(uuid.uuid3(uuid.NAMESPACE_OID, str(s)))
 
 
@@ -175,7 +166,7 @@ class EpubCreater(object):
             wt('OEBPS/toc.ncx', self.__gettocstr())
 
 
-def getgenerator(_generator: str, **args):
+def getgenerator(_generator: str, **kwgs):
     """使用指定的参数建立相应的迭代器实例
     _generator是迭代器的名字
         格式:[package_name.][module_name]generator_name:
@@ -194,7 +185,7 @@ def getgenerator(_generator: str, **args):
     else:
         # 已经导入的
         generator = eval(_generator)
-    return generator(**args)
+    return generator(**kwgs)
 
 
 def createepub(filename, source, showlog=True, meta=None):
@@ -219,14 +210,14 @@ def createepub(filename, source, showlog=True, meta=None):
         f.source.append(source)
 
 
-def recreate(epub_file: str):
+def recreate(epub_file: str, showlog=True):
     """重新生成一个epub文件"""
-    args = getsource(epub_file)
-    if args:
+    kwgs = getsource(epub_file)
+    if kwgs:
         createepub(filename=epub_file,
-                   source=getgenerator(**args),
-                   showlog=True,
-                   meta=args)
+                   source=getgenerator(**kwgs),
+                   showlog=showlog,
+                   meta=kwgs)
 
 
 if __name__ == '__main__':
