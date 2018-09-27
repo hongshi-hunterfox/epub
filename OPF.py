@@ -1,25 +1,5 @@
 # -*- coding: utf-8 -*-
-"""OPFObject相关结构
-对于一本电子出版物,
-必有的:Metadata/Mainfest/Spine
-可选的:NavMap(NCX)/guide
-弃用的:tours
-其中,guide与tours没有在此定义
-
-CoreMediaType:
-    这个枚举包含了OPF2.0所规定的核心媒体类型
-    媒体类型对ManifestItem/SpineItem
-Metadata/Mainfest,Spine,NavMap
-    这些对象都具备方法append()
-        可以使用它添加一个元素项
-    都具备属性xml
-        它一个xml片段,包含该对象在xml文档中的相应部分,没有前置空格与后续换行
-        因此,它们没有针对xml文档的缩进,但xml片段内部有相对缩进
-        为保持xml文档缩进一致,可以使用lineidentity()来为xml片段增加缩进
-
-lineidentity()
-    这个函数为字符串的每一行增加前置空格,默认是增加两个空格
-"""
+"""OPFObject相关结构"""
 
 from collections import Iterable
 import re
@@ -27,17 +7,17 @@ from enum import Enum
 from errors import *
 
 _F_XHTML = '''\
-<?xml version="1.0" encoding="utf-8"?>\r
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"\r
-  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\r
-<html xmlns="http://www.w3.org/1999/xhtml">\r
-<head>\r
-  <title>{title}</title>\r
-</head>\r
-<body>\r
-  <h2>{title}</h2>\r
-{data}\r
-</body>\r
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>{title}</title>
+</head>
+<body>
+  <h2>{title}</h2>
+{data}
+</body>
 </html>'''
 _DublinCoreNames = ('title',
                     'creator',
@@ -56,15 +36,15 @@ _DublinCoreNames = ('title',
                     'rights')
 
 
-def hrefid(href):
+def hrefid(href: str) -> str:
+    """通过href中计算一个固定的id"""
+    href += '#'
     return ''.join(re.compile(r'[\w\d\-._:]+').findall(href.split('#')[0]))
 
 
-def displayedname(name):
+def displayedname(name: str) -> str:
     """对名称做解码(_x??转化为相应字符)
     name: 需要做解码的名称
-    >>> displayedname('dc_x3atitle')
-    'dc:title'
     """
     for s_16 in set(re.compile('_x([\da-fA-F]{2})').findall(name)):
         name = name.replace('_x' + s_16, chr(int(s_16, 16)))
@@ -73,6 +53,7 @@ def displayedname(name):
 
 def lineidentity(s: str, step: int = 2) -> str:
     """将一个字符串每一行缩进指定空格"""
+
     fmt = ' ' * abs(step) + '{}'
     return '\n'.join(fmt.format(e) for e in s.split('\n'))
 
@@ -97,12 +78,11 @@ class CoreMediaType(Enum):
 class XhtmlDoc(object):
     """一个xhtml文档
     给出title与<body>中的内容即可通过html属性得到相应的xhtml文档内容
-    属性:
-    name是它写入到epub(zip)时的文件名,相对于OEBPS目录
-    title是文档标题,它用于构建相应的xhtml
-    data是文档的内容,它用于构建相应的xhtml
-    parentsrc是文档在导航(nav)中上层的文档名,如果它是顶层的,则为''
-    complete:文档是完成态.如果文档未完成则置它为False
+    name: 它写入到epub(zip)时的文件名,相对于OEBPS目录
+    title: 文档标题,它用于构建相应的xhtml
+    data: 文档的内容,它用于构建相应的xhtml
+    parentsrc: 文档在导航(nav)中上层的文档名,如果它是顶层的,则为''
+    complete: 文档是完成态.如果文档未完成则置它为False
     """
     name = title = data = parentsrc = ''
     complete = True
@@ -133,13 +113,9 @@ class _XML(list):
     '<meta name="mdate" content="2018-09-14" />'
     >>> s = _XML('metadata')
     >>> s.append(_XML('dc:identifier', '978-7-5399-6291-7', id='Bookid'))
-    >>> s.append(_XML('meta', name='Sigil version', content='0.9.7'))
-    >>> s.append(_XML('meta', name='moditydate', content='2018-09-17'))
     >>> print(s.xml)
-    <metadata>\r
-      <dc:identifier id="Bookid">978-7-5399-6291-7</dc:identifier>\r
-      <meta name="Sigil version" content="0.9.7" />\r
-      <meta name="moditydate" content="2018-09-17" />\r
+    <metadata>
+      <dc:identifier id="Bookid">978-7-5399-6291-7</dc:identifier>
     </metadata>
     """
     name = ''
@@ -183,7 +159,8 @@ class _XML(list):
             if k is not None:
                 k = displayedname(k)
                 if hasattr(v, '__call__'):
-                    v = v()  # 后期计算的值
+                    # 后期计算的值
+                    v = v()
                 if v is None:
                     v = ''
                 xml += ' {}="{}"'.format(k, v)
@@ -196,8 +173,8 @@ class _XML(list):
         """
         xml_attr = self.propertyxml
         if len(self) > 0:
-            element = lineidentity('\r\n'.join(e.xml for e in self))
-            text = '\r\n{}\r\n'.format(element)
+            element = lineidentity('\n'.join(e.xml for e in self))
+            text = '\n{}\n'.format(element)
         else:
             text = self._value
         if text is None:
@@ -211,20 +188,6 @@ class MetaItem(_XML):
     """metadata数据项(dc-metadata/x-metadata)
     dc-metadata可以不指定value,可以添加属性
     x-metadata必须指定value,且忽略添加的属性
-    属性名中的':'使用"__"代替
-    **如果属性名与值包含<>"等符号有可能使str()得到的xml的错误的
-    >>> MetaItem('source').xml  # 核心元素可以不指定值
-    '<dc:source></dc:source>'
-    >>> MetaItem('identifier','978-7-5399-6291-7').xml
-    '<dc:identifier>978-7-5399-6291-7</dc:identifier>'
-    >>> MetaItem('identifier','123',id='BookId',opf_x3ascheme='aa').xml
-    '<dc:identifier id="BookId" opf:scheme="aa">123</dc:identifier>'
-    >>> MetaItem('modifydate').xml
-    '<meta name="modifydate" content="" />'
-    >>> MetaItem('modifydate', '2018-09-14').xml
-    '<meta name="modifydate" content="2018-09-14" />'
-    >>> MetaItem('modifydate', '2018-09-14', id='1234').xml
-    '<meta name="modifydate" content="2018-09-14" />'
     """
 
     def __init__(self, node_name, node_value=None, **args):
@@ -246,28 +209,6 @@ class Metadata(_XML):
     可以使用一个包含多个MetaItem实例的列表来初始化Metadata实例
     可以向Metadata实例添加一个MetaItem实例
     可以通过指定MetaItem名/值及基属性名/值向Metadata实例添加一个MetaItem实例
-    >>> lmd = list()
-    >>> lmd.append(MetaItem('title','bookname'))
-    >>> lmd.append(MetaItem('identifier','978-7-5399-6291-7',id='ISBN'))
-    >>> lmd.append(MetaItem('Sigil version','0.4.0'))
-    >>> lmd.append(MetaItem('modifydate','2018-09-14'))
-    >>> lmd.append(MetaItem('newtime',))
-    >>> md = Metadata(lmd)  # 以列表来初始化Metadata实例
-    >>> md.append(MetaItem('Sigil version','0.4.1'))  # 追加一个MetaItem实例
-    >>> md.append('mdate','2018-09-14')  # 追加扩展元素
-    >>> md.append('language','中文',code='gb2312')  # 追加核心元素
-    >>> print(md.xml)
-    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" \
-xmlns:opf="http://www.idpf.org/2007/opf">\r
-      <dc:title>bookname</dc:title>\r
-      <dc:identifier id="ISBN">978-7-5399-6291-7</dc:identifier>\r
-      <meta name="Sigil version" content="0.4.0" />\r
-      <meta name="modifydate" content="2018-09-14" />\r
-      <meta name="newtime" content="" />\r
-      <meta name="Sigil version" content="0.4.1" />\r
-      <meta name="mdate" content="2018-09-14" />\r
-      <dc:language code="gb2312">中文</dc:language>\r
-    </metadata>
     """
 
     def __init__(self, datas: Iterable = None):
@@ -294,16 +235,6 @@ xmlns:opf="http://www.idpf.org/2007/opf">\r
         3.添加一个未建立的MetaItem元素:
             Metadata.append(item_name,item_value,...)
             这不需要预选建立一个有效的MetaItem实例,它们将被自动建立.
-        >>> t = Metadata()
-        >>> t.append([MetaItem('type'),MetaItem('source')])
-        >>> print(len(t))
-        2
-        >>> t.append(MetaItem('identifier','223355',id='BookId'))
-        >>> print(len(t))
-        3
-        >>> t.append(MetaItem('mdate','2018-09-14'))
-        >>> print(len(t))
-        4
         """
         if isinstance(key, str):
             super().append(MetaItem(key, value, **args))
@@ -318,13 +249,6 @@ class ManifestItem(_XML):
     """manifest元素项
     它不要求属性的内容满足OPF规范的要求
     href不允许包含片断标示符,因此"#"及其后续部分将被丢弃(如果有的话)
-    str()得到的将是相应的xml,无论它是否满足OPF规范的要求
-    >>> ManifestItem('0.xhtml', CoreMediaType.xhtml).xml
-    '<item id="0.xhtml" href="0.xhtml" media-type="application/xhtml+xml" />'
-    >>> ManifestItem('1.xhtml#2233').xml
-    '<item id="1.xhtml" href="1.xhtml" media-type="" />'
-    >>> ManifestItem('2.xhtml',fallback='x1').xml
-    '<item fallback="x1" id="2.xhtml" href="2.xhtml" media-type="" />'
     """
 
     def __init__(self, href: str, media_x2dtype: CoreMediaType = None, **args):
@@ -342,16 +266,6 @@ class ManifestItem(_XML):
 class Mainfest(_XML):
     """文件清单
     每个项均为一个ManifestItem实例
-    >>> mainfest = Mainfest()
-    >>> mainfest.append(ManifestItem('1.xhtml', CoreMediaType.xhtml))
-    >>> mainfest.append(ManifestItem('2.xhtml', CoreMediaType.xhtml))
-    >>> mainfest.append(ManifestItem('3.xhtml', CoreMediaType.xhtml))
-    >>> print(mainfest.xml)
-    <manifest>\r
-      <item id="1.xhtml" href="1.xhtml" media-type="application/xhtml+xml" />\r
-      <item id="2.xhtml" href="2.xhtml" media-type="application/xhtml+xml" />\r
-      <item id="3.xhtml" href="3.xhtml" media-type="application/xhtml+xml" />\r
-    </manifest>
     """
 
     def __init__(self):
@@ -380,9 +294,9 @@ class Mainfest(_XML):
                       maniitem: ManifestItem,
                       checklist: list = None):
         """检查一个ManifestItem的候选链是否合法
-            候选链不能形成循环引用,并且必需终止于一个OPF核心媒体类型.
-            当item的候选链不合法时,将抛出相应的错误.
-            如果没有错误抛出,那么,恭喜你,它是好的.
+        候选链不能形成循环引用,并且必需终止于一个OPF核心媒体类型.
+        当item的候选链不合法时,将抛出相应的错误.
+        如果没有错误抛出,那么,恭喜你,它是好的.
         item: 一个包含于此对象中的ManifestItem实例的引用
         checklist: 列出合法的媒体类型.
             默认为所有核心媒体类型均为合法的,如果要限定此候选链只能是某一部分,
@@ -410,13 +324,7 @@ class Mainfest(_XML):
 
 class SpineItem(_XML):
     """书脊项
-    linear默认为yes,不指定或指定为yes/no之外的内容时将处理为yes
-    >>> SpineItem('page1').xml
-    '<itemref idref="page1" linear="yes" />'
-    >>> SpineItem('page1','no').xml
-    '<itemref idref="page1" linear="no" />'
-    >>> SpineItem('page1','wtf?').xml
-    '<itemref idref="page1" linear="yes" />'
+    linear默认为yes,不指定或指定为yes/no之外的内容时将处理为"yes"
     """
 
     def __init__(self, idref: str, linear: str = 'yes'):
@@ -432,40 +340,6 @@ class Spine(_XML):
     对应的ManifestItem应当满足下列条件之一:
         media_type是xhtml/dtbook/oeb1doc之一
         fillback链结束于xhtml/dtbook/oeb1doc之一
-    >>> spine = Spine()
-    >>> spine.append('Text/1.xhtml')
-    >>> print(spine.xml)
-    <spine toc="ncx">\r
-      <itemref idref="Text1.xhtml" linear="yes" />\r
-    </spine>
-    >>> spine = Spine(Mainfest())
-    >>> spine.mainfest.append(ManifestItem('1.xhtml',CoreMediaType.xhtml))
-    >>> spine.mainfest.append(ManifestItem('2.xhtml',CoreMediaType.xhtml))
-    >>> spine.mainfest.append(ManifestItem('3.xhtml',CoreMediaType.xhtml))
-    >>> spine.append('3.xhtml')
-    >>> spine.append('1.xhtml')
-    >>> spine.append('2.xhtml')
-    >>> print(spine.xml)
-    <spine toc="ncx">\r
-      <itemref idref="3.xhtml" linear="yes" />\r
-      <itemref idref="1.xhtml" linear="yes" />\r
-      <itemref idref="2.xhtml" linear="yes" />\r
-    </spine>
-    >>> spine = Spine(Mainfest())
-    >>> spine.mainfest.append(ManifestItem('1.xhtml',CoreMediaType.xhtml))
-    >>> spine.mainfest.append(ManifestItem('2.xhtml',CoreMediaType.xhtml))
-    >>> spine.mainfest.append(ManifestItem('3.xhtml',CoreMediaType.xhtml))
-    >>> spine.append('Text/1.xhtml') # 引用不存在的项产生错误
-    Traceback (most recent call last):
-    errors.QuotedNothing: Text/1.xhtml
-    >>> spine = Spine(Mainfest())
-    >>> spine.mainfest.append(ManifestItem('1.xhtml',CoreMediaType.xhtml))
-    >>> spine.mainfest.append(ManifestItem('2.xhtml',CoreMediaType.xhtml))
-    >>> spine.mainfest.append(ManifestItem('3.xhtml',CoreMediaType.xhtml))
-    >>> spine.append('1.xhtml')
-    >>> spine.append('1.xhtml')  #重复引用产生错误
-    Traceback (most recent call last):
-    errors.QuotedRepeat: 1.xhtml
     """
     mainfest = None
 
@@ -496,24 +370,6 @@ class NavPoint(_XML):
     """Navigation Center eXtended,即目录
     ncx具备多层结构,顺序(order)是重要的
     src允许使用片断标示符#...来指向某个文档中特定位置
-    >>> ncx = NavPoint('第一章 突如其来的就这行发生了','p1')
-    >>> ncx.append(NavPoint('第一节 谁都不要拦着我','p2'))
-    >>> ncx.reorder()
-    >>> print(ncx.xml) #doctest: +ELLIPSIS
-    <navPoint id="p1" playOrder="1">\r
-      <navLabel>\r
-        <text>第一章 突如其来的就这行发生了</text>\r
-      </navLabel>\r
-      <content src="p1" />\r
-      <navPoint id="p2" playOrder="2">\r
-        <navLabel>\r
-          <text>第一节 谁都不要拦着我</text>\r
-        </navLabel>\r
-        <content src="p2" />\r
-      </navPoint>\r
-    </navPoint>
-    >>> print(ncx.depth)
-    2
     """
     __order = 0
     _src = ''
@@ -552,13 +408,7 @@ class NavPoint(_XML):
         return nodes[-1]
 
     def getpath(self, lastid: str = '') -> list:
-        """得到指定id的路径
-        hrefid: 路径计算出相应的id(hrefid函数)
-        >>> ncx = NavPoint('第一章 突如其来的就这行发生了','p1')
-        >>> ncx.append(NavPoint('第一节 谁都不要拦着我','p2'))
-        >>> ncx.getpath('p2')
-        ['p1', 'p2']
-        """
+        """得到指定id的路径"""
         if self.id == lastid:
             return [lastid]
         for item in self:
@@ -589,49 +439,7 @@ class NavPoint(_XML):
 
 
 class NavMap(NavPoint):
-    """NavMap是NcxItem的顶层封装,额外实现xml方法
-    >>> nav = NavMap()
-    >>> nav.append(NavPoint('第一部 突如其来','p1'))
-    >>> nav.append(NavPoint('第二部 今天没吃药','p5'))
-    >>> nav.append(NavPoint('第一章 谁都不要拦着我','p2'),'p1')
-    >>> nav.append(NavPoint('第二章 万万没有想到','p4'),'p1')
-    >>> nav.append(NavPoint('第一节 狂燥的布莱尔','p3'),'p1','p2')
-    >>> print(nav.xml)
-    <navMap>\r
-      <navPoint id="p1" playOrder="1">\r
-        <navLabel>\r
-          <text>第一部 突如其来</text>\r
-        </navLabel>\r
-        <content src="p1" />\r
-        <navPoint id="p2" playOrder="2">\r
-          <navLabel>\r
-            <text>第一章 谁都不要拦着我</text>\r
-          </navLabel>\r
-          <content src="p2" />\r
-          <navPoint id="p3" playOrder="3">\r
-            <navLabel>\r
-              <text>第一节 狂燥的布莱尔</text>\r
-            </navLabel>\r
-            <content src="p3" />\r
-          </navPoint>\r
-        </navPoint>\r
-        <navPoint id="p4" playOrder="4">\r
-          <navLabel>\r
-            <text>第二章 万万没有想到</text>\r
-          </navLabel>\r
-          <content src="p4" />\r
-        </navPoint>\r
-      </navPoint>\r
-      <navPoint id="p5" playOrder="5">\r
-        <navLabel>\r
-          <text>第二部 今天没吃药</text>\r
-        </navLabel>\r
-        <content src="p5" />\r
-      </navPoint>\r
-    </navMap>
-    >>> print(nav.depth)
-    3
-    """
+    """NavMap是NcxItem的顶层封装,额外实现xml方法"""
 
     def __init__(self):
         super().__init__()
@@ -640,31 +448,24 @@ class NavMap(NavPoint):
         self.clear()
 
     def getpath(self, src: str = '') -> list:
-        """
-        >>> nav = NavMap()
-        >>> nav.append(NavPoint('第一部 突如其来','p1'))
-        >>> nav.append(NavPoint('第二部 今天没吃药','p5'))
-        >>> nav.append(NavPoint('第一章 谁都不要拦着我','p2'),'p1')
-        >>> nav.append(NavPoint('第二章 万万没有想到','p4'),'p1')
-        >>> nav.append(NavPoint('第一节 狂燥的布莱尔','p3'),'p1','p2')
-        >>> nav.getpath('p4')
-        ['p1', 'p4']
-        >>> nav.getpath('')
-        Traceback (most recent call last):
-        errors.QuotedNothing
-        """
+        """NavMap.getpath()不返回自己这一层"""
         path = super().getpath(hrefid(src))
         if path:
-            return path[1:]  # path[0]指向了navmap自己
+            # path[0]指向了navmap自己
+            return path[1:]
         else:
             raise QuotedNothing(src)
 
     @property
     def depth(self):
+        """NavMap.depth不包含自身这一层"""
         return super().depth - 1
 
     @property
     def xml(self):
+        """在取得xml前要调用reorder来使order重新初始始化
+        这是顶层对象才需要做的事
+        """
         self.reorder()
         xml = super().xml
         self.reorder()
@@ -673,4 +474,4 @@ class NavMap(NavPoint):
 
 if __name__ == '__main__':
     import doctest
-    doctest.testmod()
+    doctest.testfile('test/OPF.rst')

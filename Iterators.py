@@ -59,7 +59,7 @@ def htmltodoc(html, filename, titlere, linere,
                  line in linere.findall(html)]
     except (Exception,):
         lines = []
-    data = '\r\n'.join(lines)
+    data = '\n'.join(lines)
     return XhtmlDoc(filename, title, data)
 
 
@@ -71,7 +71,7 @@ def filetodoc(filename: str, encode: str = 'utf-8',
             lines.append(textengine(line))
     return XhtmlDoc(filename,
                     os.path.basename(filename),
-                    '\r\n'.join(lines))
+                    '\n'.join(lines))
 
 
 def dirtodoc(path: str, dirnames):
@@ -92,12 +92,12 @@ def dirtodoc(path: str, dirnames):
     True
     """
     t_path = os.path.split(path)
-    data = '  <h3>目录中的文件列表:</h3>\r\n  <ui>\r\n'
+    data = '  <h3>目录中的文件列表:</h3>\n  <ui>\n'
     for file in os.scandir(path):
         if file.is_file():
-            data += '    <li>{}</li>\r\n'.format(file.name)
+            data += '    <li>{}</li>\n'.format(file.name)
         else:
-            data += '    <li>[目录]:{}</li>\r\n'.format(file.name)
+            data += '    <li>[目录]:{}</li>\n'.format(file.name)
     data += '  </ui>'
     return XhtmlDoc(filename=dirnames[path],
                     title=t_path[1],
@@ -287,7 +287,7 @@ def iter_txt(file,
                     new_doc = XhtmlDoc(next(namegen))
                 new_doc.title = line
             else:
-                new_doc.data += textengine(line) + '\r\n'
+                new_doc.data += textengine(line) + '\n'
     if new_doc.data != '':
         if new_doc.title == '':
             new_doc.title = os.path.basename(file)
@@ -316,7 +316,7 @@ def iter_dir(homedir, exts='*', includesubdir=False, monoinfile=False,
     dirnames = {homedir: ''}
     docsrc = autoname('Text/{}.xhtml')
     dirsrc = autoname('Text/dir{}.xhtml')
-    li_fmt = '<li><a href="{}">{}</a></li>\r\n'
+    li_fmt = '<li><a href="{}">{}</a></li>\n'
     for file in eachfiles(homedir, exts, includesubdir):
         dirname = os.path.dirname(file)
         # 新目录的父节点可能也没有...直到homedir才确定有
@@ -350,7 +350,7 @@ def iter_dir(homedir, exts='*', includesubdir=False, monoinfile=False,
             file_src = next(dirsrc)
             filedoc = XhtmlDoc(filename=file_src,
                                title=juststem(file),
-                               data='<ui>\r\n',
+                               data='<ui>\n',
                                parentsrc=dirnames[dirname][5:],
                                complete=False)
             yield filedoc
@@ -363,7 +363,7 @@ def iter_dir(homedir, exts='*', includesubdir=False, monoinfile=False,
                 filedoc.data += li_fmt.format(each_doc.name[5:],
                                               each_doc.title)
                 yield each_doc
-            filedoc.data += '</ui>\r\n'
+            filedoc.data += '</ui>\n'
             filedoc.complete = True  # filedoc已经完成
 
 
@@ -380,7 +380,7 @@ def iter_files(files: list,
     encode: 文件使用的编码
         若不指定则自动识别,但这会增加额外的处理时间并且不一定正确
     """
-    li_fmt = '<li><a href="{}">{}</a></li>\r\n'
+    li_fmt = '<li><a href="{}">{}</a></li>\n'
     for file in files:
         file_encode = encode
         if file_encode is None:  # 文件编码识别
@@ -388,7 +388,7 @@ def iter_files(files: list,
         if titlere:  # 文件内分章节
             file_doc = XhtmlDoc(filename=next(namegen),
                                 title=juststem(file),
-                                data='<ui>\r\n',
+                                data='<ui>\n',
                                 complete=False)
             yield file_doc  # 文档是未决的
             for each_doc in iter_txt(file=file,
@@ -400,7 +400,7 @@ def iter_files(files: list,
                                                each_doc.title)
                 each_doc.parentsrc = file_doc.name
                 yield each_doc
-            file_doc.data += '</ui>\r\n'
+            file_doc.data += '</ui>\n'
             file_doc.complete = True
         else:  # 文件内不分章节
             txt_doc = filetodoc(filename=file,
