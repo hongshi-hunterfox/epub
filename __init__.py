@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from OPF import XhtmlDoc
 from EpubCreater import createepub, getgenerator, recreate
 from Iterators import default_textengine, autoname, \
