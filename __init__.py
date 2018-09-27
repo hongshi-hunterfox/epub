@@ -4,7 +4,7 @@ from OPF import XhtmlDoc
 from EpubCreater import createepub, getgenerator, recreate
 from Iterators import default_textengine, autoname, \
     htmltodoc, filetodoc, dirtodoc, getfileencode,\
-    iter_page, iter_url, iter_txt, iter_dir
+    iter_page, iter_url, iter_txt, iter_dir, iter_files
 
 
 __all__ = ['XhtmlDoc',
@@ -21,4 +21,5 @@ __all__ = ['XhtmlDoc',
            'iter_url',
            'iter_txt',
            'iter_dir',
+           'iter_files',
            ]
