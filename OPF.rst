@@ -58,6 +58,15 @@ class XhtmlDoc
 这些属性都可以在建立实例时通过参数传递给这个类的 ``__init__`` ,其中, ``name`` 属
 性对应的是命名参数 ``filename`` .
 
+``translator`` 如果不能在提供data时提供html块(比如一份rST),则可以编写一个将rST文
+本翻译为html块的翻译器,以使html属性能正确的给出完整的xhtml文档内容.
+``translator`` 原型: ``func: translator(source: str) ->str``,例如,一个简单的text
+文本处理器:
+
+::
+
+    trans = lambda s: ''.join('<p>{}</p>'.format(_) for _ in s.split('\n'))
+
 class _XML
 ------------
 这是一个私有类.因为它是很多类的派生源,所以在此做一个简单的说明.

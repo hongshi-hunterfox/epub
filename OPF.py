@@ -83,22 +83,27 @@ class XhtmlDoc(object):
     data: 文档的内容,它用于构建相应的xhtml
     parentsrc: 文档在导航(nav)中上层的文档名,如果它是顶层的,则为''
     complete: 文档是完成态.如果文档未完成则置它为False
+    translator: 翻译器.如果data不是html块,可以指定相应的翻译器将它翻译为html块
+        翻译器应当是一个函数,接受一个字符串并返回等价的html块
     """
-    name = title = data = parentsrc = ''
-    complete = True
 
     def __init__(self, filename: str = None, title: str = '',
                  data: str = '', parentsrc: str = '',
-                 complete=True):
+                 complete=True, translator=None):
         self.name = filename
         self.title = title
         self.data = data
         self.parentsrc = parentsrc
         self.complete = complete
+        self.translator = translator
 
     @property
     def html(self):
-        return _F_XHTML.format(title=self.title, data=self.data)
+        if self.translator:
+            data = self.translator(self.data)
+        else:
+            data = self.data
+        return _F_XHTML.format(title=self.title, data=data)
 
 
 class _XML(list):
