@@ -209,6 +209,7 @@ def iter_url(url_fmt, *url_params,
             maxget -= 1
         except (Exception,):
             # 可能没有下一页，param_re.findall()[0]产生错误
+            # 迭代完毕
             raise StopIteration
 
 
