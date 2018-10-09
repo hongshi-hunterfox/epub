@@ -1,15 +1,17 @@
 # 生成与维护epub文档的工具
 
-## createepub
-使用createepub来生成一个epub文档:
+## createepub()
+使用createepub来生成一个epub文档.
 
 createepub(filename, source, ...)
+
 必需参数:
-filename是一个字符串,它是将要生成的epub文档名,如果它已经存在,新的文档新履盖它.
-source是一个可以被for的对象,它的每一项是一个OPF.XhtmlDoc对象
+- filename
+是一个字符串,它是将要生成的epub文档名,如果它已经存在,新的文档新履盖它.
+- source是一个可以被for的对象,它的每一项是一个OPF.XhtmlDoc对象
 可选参数:
-showlog是一个逻辑值,它指出是否在控制台上输出生成过程的简要信息,默认为True
-meta是一个字典,它包含了创建生成器的所有参数,默认为None.
+- showlog是一个逻辑值,它指出是否在控制台上输出生成过程的简要信息,默认为True
+- meta是一个字典,它包含了创建生成器的所有参数,默认为None.
 这个字典中的信息将被记录到epub文档中,它们将在重新生成这个epub文档时被使用
 
 示例:
