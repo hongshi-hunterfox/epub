@@ -39,6 +39,28 @@
 可以使用`recreate()`来更简单的重新生成这个epub文档，
 因为它会使用记录到epub文档中的meta字典重新建立相应的生成器.
 
+## getgenerator()
+以指定参数创建一个生成器实例
+### 语法
+`recreate(_generator, **kwgs)`
+**必需参数:**<br>
+`_generator`<br>
+一个字符串,迭代器的名字,格式为`[package_name.][module_name.]generator_name`
+**可选参数:**<br>
+`args`<br>
+如果初始化迭代器需要参数以指名参数的形式传递它们
+### 示例
+```
+    iter = getgenerator(_generator='Iterators.iter_txt',
+                        file='mybook.txt')
+```
+或者如`createepub`中示例那样:
+```
+    kwgs = {'_generator': 'Iterators.iter_txt',
+            'file': 'mybook.txt'}
+    iter = getgenerator(**kwgs)
+```
+
 ## recreate()
 可以使用`recreate`来重新生成之前使用`createepub`生成的epub文档.
 这种方式比`createepub`需要的参数更少.
@@ -108,3 +130,63 @@ html翻译器.<br>
 一般情况下,我们可以直接生产html代码块作为`XhtmlDoc.data`的值,
 此时我们无须关注这个属性.
 
+## default_textengine()
+基本的行处理器,它只是简单的将每一行作为一个段落,前置两个全角空格后放入到`<p>`标记对中.
+
+## autoname()
+它可以迭代出不重复的xhtml文档名.可以在生成器中使用它为每个XhtmlDoc实例生成一个不重复的名称.<br>
+如果有多个生成器共同工作,这将是很有必要的.
+### 语法
+`autoname([fmt])`<br>
+fmt默认值为`'{}.xhtml'`.其中的{}部分将在每次迭代时替换为一个自增的数.
+
+## htmltodoc()
+根据html流中的内容生成XhtmlDoc的title与data.
+### 语法
+`htmltodoc(html, filename, titlere, linere[, textengine])`<br>
+**参数说明**<br>
+- html<br>
+    一段html内容
+- filename<br>
+    用于从html中提取文档标题的正则表达式(SRE_Pattern).
+- titlere<br>
+    用于从html中提取每一行文档的(SRE_Pattern).
+- linere(可选的)<br>
+    行处理器,它用于对提取的每一行文档进行预处理.它应当是一个函数/方法,
+    接受一段文本,返回处理后的文本.<br>
+    默认的行处理器default_textengine已经完成简单的处理
+
+## filetodoc()
+以一个txt文档的内容生成一个XhtmlDoc文档
+### 语法
+`filetodoc(filename[, encode][, textengine])`
+
+## dirtodoc()
+将指定目录中的文件做成一个列表,以此生成一个XhtmlDoc对象
+### 语法
+`dirtodoc(path,dirnames)`
+**参数说明**<br>
+- path<br>
+    指出要列表的目录,要求使用`/`作为路径分隔符.<br>
+- dirnames<br>
+    一个已经注册的目录字典,注册目录为key，对应的文件名为value
+### 示例
+```
+    doc = dirtodoc('c:/windows/IdentityCRL',
+                   {'c:': 'dir1.xhtml',
+                    'c:/windows': 'dir2.xhtml',
+                    'c:/windows/CSC': 'dir3.xhtml',
+                    'c:/windows/IdentityCRL': 'dir4.xhtml'})
+```
+
+## getfileencode()
+测试得到文本类型文件可能使用的编码格式(仅限中文).
+它并不是总是正确的,而且也比较浪费时间.
+因此不是必要的时候不要使用它.
+### 语法
+`getfileencode(file)`
+### 示例
+```
+    ?getfileencode('C:/Documents/nodes/2006_03_17.txt')
+    ?getfileencode(''D:/Python/baseweb\\core\\logon.py')
+```
