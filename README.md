@@ -92,7 +92,8 @@
 - iter_url
 - iter_txt
 - iter_dir
-- iter_files<br>
+- iter_files
+
 这些比较常用的生成器,如果这些不能满足使用需要,
 可以自定义一个生成器,它的基本写法如下：
 ```
